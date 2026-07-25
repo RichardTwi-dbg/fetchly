@@ -1,2 +1,0 @@
-# fetchly
-Initial README  
