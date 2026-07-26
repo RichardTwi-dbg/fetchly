@@ -1,0 +1,43 @@
+{
+  "name": "fetchly",
+  "version": "1.0.0",
+  "description": "A lightweight, fully typed fetch client",
+  "type": "module",
+  "main": ".dist/index.cjs",
+  "module": ".dist/index.js",
+  "types": ".dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "tsup",
+    "build:types": "tsc --project tsconfig.build.json",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "fetch",
+    "http",
+    "api",
+    "typescript",
+    "client"
+  ],
+  "author": "RichardTwi",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
