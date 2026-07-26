@@ -34,6 +34,22 @@
   ],
   "author": "RichardTwi",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "prepack": "npm run build",
+  "prepublishOnly": "npm run typecheck && npm test",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RichardTwi-dbg/fetchly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RichardTwi-dbg/fetchly/issues"
+  },
+  "homepage": "https://github.com/RichardTwi-dbg/fetchly#readme",
   "devDependencies": {
     "@types/node": "^26.1.1",
     "tsup": "^8.5.1",
