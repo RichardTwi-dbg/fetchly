@@ -1,5 +1,5 @@
 {
-  "name": "fetchly",
+  "name": "@richardtwi-dbg/fetchly",
   "version": "0.2.0",
   "description": "A lightweight, fully typed fetch client",
   "type": "module",

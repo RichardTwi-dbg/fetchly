@@ -4,6 +4,8 @@ Fetchly is a lightweight, type-safe HTTP client built on top of the native Fetch
 
 It removes repetitive response handling while keeping the API close to `fetch`.
 
+It shares nothing but the name with the similar npm package `fetchly`.
+
 ```ts
 const response = await fetch("/api/users");
 
@@ -41,16 +43,8 @@ Fetchly is currently under active development and is not published to npm yet.
 
 ## Installation
 
-Once published:
-
 ```bash
-npm install fetchly
-```
-
-If the unscoped `fetchly` package name is unavailable on npm, the package will be published under a scoped name:
-
-```bash
-npm install @kuber/fetchly
+npm install @richardtwi-dbg/fetchly
 ```
 
 ## Basic usage
