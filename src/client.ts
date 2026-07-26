@@ -7,6 +7,7 @@ export function createClient(options: ClientOptions = {}): ApiClient {
             request<T>({
                 baseUrl: options.baseUrl,
                 clientHeaders: options.headers,
+                timeout: options.timeout,
                 method,
                 path,
                 ...requestOptions

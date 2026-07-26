@@ -7,6 +7,7 @@ export type JsonValue = | string | number | boolean | null | JsonValue[] | { [ke
 export interface ClientOptions {
     baseUrl?: string;
     headers?: HeadersInit;
+    timeout?: number;
 }
 
 export interface RequestOptions {
@@ -14,6 +15,7 @@ export interface RequestOptions {
     headers?: HeadersInit;
     body?: JsonValue;
     signal?: AbortSignal;
+    timeout?: number;
 }
 
 export interface ApiClient{
