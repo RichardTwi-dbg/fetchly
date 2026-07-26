@@ -1,12 +1,15 @@
 import { ApiError, TimeoutError} from "./errors.js";
-import type { HttpMethod, JsonValue, QueryValue, RequestOptions } from "./types.js";
+import type { HttpMethod, InterceptorRequest, JsonValue, QueryValue, RequestOptions } from "./types.js";
+import type { InternalInterceptorManager } from "./interceptors.js";
 
-interface RequestConfig extends RequestOptions {
-    baseUrl?: string;
+interface RequestConfig extends Omit<InterceptorRequest, "headers"> {
     clientHeaders?: HeadersInit;
-    method: HttpMethod;
-    path: string;
-    timeout?: number;
+    headers?: HeadersInit;
+}
+
+interface RequestInterceptors {
+    request: InternalInterceptorManager<InterceptorRequest>;
+    response: InternalInterceptorManager<Response>;
 }
 
 function createUrl(baseUrl: string | undefined, path: string, query: Record<string, QueryValue> | undefined): string {
@@ -74,49 +77,58 @@ async function parseBody(response: Response): Promise<unknown> {
     return response.text();
 }
 
-export async function request<T>(config:RequestConfig): Promise<T> {
-    const headers = createHeaders(
-        config.clientHeaders,
-        config.headers,
-        config.body
-    );
+export async function request<T>(config:RequestConfig, interceptors: RequestInterceptors): Promise<T> {
+    const interceptedConfig = await interceptors.request.apply({
+        baseUrl: config.baseUrl,
+        method: config.method,
+        path: config.path,
+        query: config.query,
+        headers: createHeaders(
+            config.clientHeaders,
+            config.headers,
+            config.body,
+        ),
+        body: config.body,
+        signal: config.signal,
+        timeout: config.timeout
+    })
 
-    validateTimeout(config.timeout);
+    validateTimeout(interceptedConfig.timeout);
 
     const controller = new AbortController();
     let bTimedOut = false;
 
     const forwardAbort = () => {
-        controller.abort(config.signal?.reason);
+        controller.abort(interceptedConfig.signal?.reason);
     };
 
-    if (config.signal?.aborted)
+    if (interceptedConfig.signal?.aborted)
     {
         forwardAbort();
     } else 
     {
-        config.signal?.addEventListener("abort", forwardAbort, {once:true});
+        interceptedConfig.signal?.addEventListener("abort", forwardAbort, {once:true});
     }
 
-    const iTimeOutId = config.timeout === undefined ? undefined : setTimeout(() => {
+    const iTimeOutId = interceptedConfig.timeout === undefined ? undefined : setTimeout(() => {
         bTimedOut = true;
         controller.abort();
-    }, config.timeout);
+    }, interceptedConfig.timeout);
 
     let response: Response;
 
     try {
-        response = await fetch(createUrl(config.baseUrl, config.path, config.query), {
-            method: config.method,
-            headers,
-            body: config.body === undefined ? undefined : JSON.stringify(config.body),
+        response = await fetch(createUrl(interceptedConfig.baseUrl, interceptedConfig.path, interceptedConfig.query), {
+            method: interceptedConfig.method,
+            headers: interceptedConfig.headers,
+            body: interceptedConfig.body === undefined ? undefined : JSON.stringify(interceptedConfig.body),
             signal: controller.signal,
         });
     } catch (error)
     {
-        if (bTimedOut && config.timeout !== undefined)
+        if (bTimedOut && interceptedConfig.timeout !== undefined)
         {
-            throw new TimeoutError(config.timeout);
+            throw new TimeoutError(interceptedConfig.timeout);
         }
 
         throw error;
@@ -126,8 +138,10 @@ export async function request<T>(config:RequestConfig): Promise<T> {
             clearTimeout(iTimeOutId);
         }
 
-        config.signal?.removeEventListener("abort", forwardAbort);
+        interceptedConfig.signal?.removeEventListener("abort", forwardAbort);
     }
+
+    response = await interceptors.response.apply(response);
 
     const body  = await parseBody(response);
 

@@ -24,7 +24,7 @@ const users = await api.get<User[]>("/users");
 
 ## Status
 
-Fetchly is currently under active development and is not published to npm yet.
+Fetchly is currently under active development.
 
 ## Features
 
@@ -260,17 +260,17 @@ npm run build
 
 ## Roadmap
 
-- Request and response interceptors
-- Retry support for temporary server errors
-- JWT token refresh
-- FormData upload support
-- File download helpers
-- Middleware API
-- Cache support and TTL
-- React hooks package
-- OpenAPI client generation
-- GitHub Actions CI
-- npm publishing and release automation
+- [x] Request and response interceptors.
+- [ ] Retry support for temporary server errors
+- [ ] JWT token refresh
+- [ ] FormData upload support
+- [ ] File download helpers
+- [ ] Middleware API
+- [ ] Cache support and TTL
+- [ ] React hooks package
+- [ ] OpenAPI client generation
+- [ ] GitHub Actions CI
+- [x] npm publishing and release automation
 
 ## License
 

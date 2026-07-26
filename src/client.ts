@@ -1,7 +1,13 @@
+import { createInterceptorManager } from "./interceptors.js";
 import { request } from "./request.js";
-import type { ApiClient, ClientOptions, HttpMethod, RequestOptions } from "./types.js";
+import { InterceptorRequest, type ApiClient, type ClientOptions, type HttpMethod, type RequestOptions } from "./types.js";
 
 export function createClient(options: ClientOptions = {}): ApiClient {
+    const interceptors = {
+        request: createInterceptorManager<InterceptorRequest>(),
+        response: createInterceptorManager<Response>()
+    }
+
     const createMethod = (method: HttpMethod) => 
         <T>(path: string, requestOptions?: RequestOptions): Promise<T> =>
             request<T>({
@@ -11,9 +17,12 @@ export function createClient(options: ClientOptions = {}): ApiClient {
                 method,
                 path,
                 ...requestOptions
-            });
+            },
+            interceptors
+        );
 
     return {
+        interceptors,
         get: createMethod("GET"),
         post: createMethod("POST"),
         put: createMethod("PUT"),
