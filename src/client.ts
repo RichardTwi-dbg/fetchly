@@ -6,6 +6,7 @@ export function createClient(options: ClientOptions = {}): ApiClient {
         <T>(path: string, requestOptions?: RequestOptions): Promise<T> =>
             request<T>({
                 baseUrl: options.baseUrl,
+                clientHeaders: options.headers,
                 method,
                 path,
                 ...requestOptions

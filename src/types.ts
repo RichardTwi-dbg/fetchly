@@ -10,13 +10,18 @@ export interface ClientOptions {
 }
 
 export interface RequestOptions {
+    query?: Record<string, QueryValue>;
+    headers?: HeadersInit;
+    body?: JsonValue;
     signal?: AbortSignal;
 }
 
 export interface ApiClient{
-    get<T>(path: string, options?: RequestOptions): Promise<T>;
+    get<T>(path: string, options?: Omit<RequestOptions, "body">): Promise<T>;
+
     post<T>(path: string, options?: RequestOptions): Promise<T>;
     put<T>(path: string, options?: RequestOptions): Promise<T>;
     patch<T>(path: string, options?: RequestOptions): Promise<T>;
-    delete<T>(path: string, options?: RequestOptions): Promise<T>;
+
+    delete<T>(path: string, options?: Omit<RequestOptions, "body">): Promise<T>;
 }
