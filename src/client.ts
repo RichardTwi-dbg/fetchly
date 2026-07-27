@@ -1,11 +1,24 @@
 import { createInterceptorManager } from "./interceptors.js";
+import { createMiddlewareManager } from "./middleware.js";
+import { createRetryMiddleware } from "./plugins/retry.js";
 import { request } from "./request.js";
-import { InterceptorRequest, type ApiClient, type ClientOptions, type HttpMethod, type RequestOptions } from "./types.js";
+import { InterceptorRequest, type ApiClient, type ClientOptions, type FetchlyPlugin, type HttpMethod, type RequestOptions } from "./types.js";
 
 export function createClient(options: ClientOptions = {}): ApiClient {
     const interceptors = {
         request: createInterceptorManager<InterceptorRequest>(),
         response: createInterceptorManager<Response>()
+    }
+
+    const middlewares = createMiddlewareManager();
+    middlewares.use(createRetryMiddleware());
+
+    const use = (plugin: FetchlyPlugin): void => {
+        plugin.install(middlewares);
+    };
+
+    for (const plugin of options.plugins ?? []) {
+        use(plugin);
     }
 
     const createMethod = (method: HttpMethod) => 
@@ -19,11 +32,13 @@ export function createClient(options: ClientOptions = {}): ApiClient {
                 path,
                 ...requestOptions
             },
-            interceptors
+            interceptors,
+            middlewares,
         );
 
     return {
         interceptors,
+        use,
         get: createMethod("GET"),
         post: createMethod("POST"),
         put: createMethod("PUT"),

@@ -12,11 +12,38 @@ export interface RetryOptions {
     statuses?: readonly number[];
 }
 
+export interface JwtOptions {
+    getAccessToken: () => string | undefined | Promise<string | undefined>;
+    refreshToken: () => void | Promise<void>;
+}
+
+export interface RequestContext {
+    request: InterceptorRequest;
+    meta: Map<symbol, unknown>;
+}
+
+export type MiddlewareNext = () => Promise<Response>;
+
+export type Middleware = (
+    context: RequestContext,
+    next: MiddlewareNext,
+) => Promise<Response>;
+
+export interface MiddlewareRegistry {
+    use(middleware: Middleware): void;
+}
+
+export interface FetchlyPlugin {
+    name: string;
+    install(client: MiddlewareRegistry): void;
+}
+
 export interface ClientOptions {
     baseUrl?: string;
     headers?: HeadersInit;
     timeout?: number;
     retry?: RetryOptions;
+    plugins?: readonly FetchlyPlugin[];
 }
 
 export interface RequestOptions {
@@ -53,6 +80,8 @@ export interface ClientInterceptors {
 
 export interface ApiClient{
     readonly interceptors: ClientInterceptors;
+
+    use(plugin: FetchlyPlugin): void;
 
     get<T>(path: string, options?: Omit<RequestOptions, "body">): Promise<T>;
     post<T>(path: string, options?: RequestOptions): Promise<T>;

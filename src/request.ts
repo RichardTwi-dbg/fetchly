@@ -1,10 +1,11 @@
 import { ApiError, TimeoutError } from "./errors.js";
 import type { InternalInterceptorManager } from "./interceptors.js";
+import type { InternalMiddlewareManager } from "./middleware.js";
 import type {
     InterceptorRequest,
     JsonValue,
     QueryValue,
-    RetryOptions,
+    RequestContext,
 } from "./types.js";
 
 interface RequestConfig extends Omit<InterceptorRequest, "headers"> {
@@ -17,16 +18,10 @@ interface RequestInterceptors {
     response: InternalInterceptorManager<Response>;
 }
 
-interface ResolvedRetryOptions {
-    count: number;
-    delay: number;
-    statuses: readonly number[];
-}
-
-const defaultRetryStatuses = [500, 502, 503, 504] as const;
-
 function createUrl(baseUrl: string | undefined, path: string, query: Record<string, QueryValue> | undefined): string {
-    const url = baseUrl ? `${baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}` : path;
+    const url = baseUrl
+        ? `${baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`
+        : path;
 
     if (!query) {
         return url;
@@ -34,10 +29,8 @@ function createUrl(baseUrl: string | undefined, path: string, query: Record<stri
 
     const params = new URLSearchParams();
 
-    for (const [key, value] of Object.entries(query)) 
-    {
-        if (value !== null && value !== undefined) 
-        {
+    for (const [key, value] of Object.entries(query)) {
+        if (value !== null && value !== undefined) {
             params.set(key, String(value));
         }
     }
@@ -68,28 +61,6 @@ function validateTimeout(timeout: number | undefined): void {
     if (timeout !== undefined && (!Number.isFinite(timeout) || timeout < 0)) {
         throw new RangeError("Timeout must be a non-negative finite number");
     }
-}
-
-function resolveRetryOptions(retry: RetryOptions | undefined): ResolvedRetryOptions {
-    const options: ResolvedRetryOptions = {
-        count: retry?.count ?? 0,
-        delay: retry?.delay ?? 0,
-        statuses: retry?.statuses ?? defaultRetryStatuses,
-    };
-
-    if (!Number.isInteger(options.count) || options.count < 0) {
-        throw new RangeError("Retry count must be a non-negative integer");
-    }
-
-    if (!Number.isFinite(options.delay) || options.delay < 0) {
-        throw new RangeError("Retry delay must be a non-negative finite number");
-    }
-
-    return options;
-}
-
-function wait(delay: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
 async function fetchWithTimeout(config: InterceptorRequest): Promise<Response> {
@@ -140,8 +111,12 @@ async function parseBody(response: Response): Promise<unknown> {
     return contentType.includes("application/json") ? response.json() : response.text();
 }
 
-export async function request<T>(config: RequestConfig, interceptors: RequestInterceptors): Promise<T> {
-    const interceptedConfig = await interceptors.request.apply({
+export async function request<T>(
+    config: RequestConfig,
+    interceptors: RequestInterceptors,
+    middlewares: InternalMiddlewareManager,
+): Promise<T> {
+    const requestConfig = await interceptors.request.apply({
         baseUrl: config.baseUrl,
         method: config.method,
         path: config.path,
@@ -153,21 +128,17 @@ export async function request<T>(config: RequestConfig, interceptors: RequestInt
         retry: config.retry,
     });
 
-    validateTimeout(interceptedConfig.timeout);
-    const retry = resolveRetryOptions(interceptedConfig.retry);
+    validateTimeout(requestConfig.timeout);
 
-    let response: Response;
+    const context: RequestContext = {
+        request: requestConfig,
+        meta: new Map(),
+    };
 
-    for (let attempt = 0; ; attempt += 1) {
-        response = await fetchWithTimeout(interceptedConfig);
-        response = await interceptors.response.apply(response);
-
-        if (!retry.statuses.includes(response.status) || attempt >= retry.count) {
-            break;
-        }
-
-        await wait(retry.delay);
-    }
+    const response = await middlewares.execute(context, async () => {
+        const rawResponse = await fetchWithTimeout(context.request);
+        return interceptors.response.apply(rawResponse);
+    });
 
     const body = await parseBody(response);
 
