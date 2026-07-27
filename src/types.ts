@@ -6,10 +6,17 @@ export type JsonValue = | string | number | boolean | null | JsonValue[] | { [ke
 
 export type Interceptor<T> = (value: T) => T | Promise<T>;
 
+export interface RetryOptions {
+    count: number;
+    delay?: number;
+    statuses?: readonly number[];
+}
+
 export interface ClientOptions {
     baseUrl?: string;
     headers?: HeadersInit;
     timeout?: number;
+    retry?: RetryOptions;
 }
 
 export interface RequestOptions {
@@ -18,6 +25,7 @@ export interface RequestOptions {
     body?: JsonValue;
     signal?: AbortSignal;
     timeout?: number;
+    retry?: RetryOptions;
 }
 
 export interface InterceptorRequest {
@@ -29,6 +37,7 @@ export interface InterceptorRequest {
     body?: JsonValue;
     signal?: AbortSignal;
     timeout?: number;
+    retry?: RetryOptions;
 }
 
 export interface InterceptorManager<T> {

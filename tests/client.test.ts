@@ -126,4 +126,37 @@ describe("createClient", () => {
       body: { message: "Not found" },
     });
   });
+
+  it("retries configured temporary server errors", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("Service unavailable", { status: 503 }))
+      .mockResolvedValueOnce(new Response("Bad gateway", { status: 502 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 1 }), {
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const api = createClient({ retry: { count: 2, delay: 0 } });
+    const user = await api.get<{ id: number }>("/users/1");
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(user).toEqual({ id: 1 });
+  });
+
+  it("does not retry statuses outside the retry list", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response("Not found", { status: 404 }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const api = createClient({ retry: { count: 3, delay: 0 } });
+    await expect(api.get("/missing")).rejects.toBeInstanceOf(ApiError);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

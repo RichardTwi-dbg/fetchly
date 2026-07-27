@@ -1,3 +1,15 @@
-export {createClient} from "./client.js";
+export { createClient } from "./client.js";
 export { ApiError, TimeoutError } from "./errors.js";
-import type { ApiClient, ClientOptions, HttpMethod, RequestOptions, Interceptor, InterceptorManager, InterceptorRequest, JsonValue, QueryValue } from "./types.js";
+export type {
+    ApiClient,
+    ClientInterceptors,
+    ClientOptions,
+    HttpMethod,
+    Interceptor,
+    InterceptorManager,
+    InterceptorRequest,
+    JsonValue,
+    QueryValue,
+    RequestOptions,
+    RetryOptions,
+} from "./types.js";

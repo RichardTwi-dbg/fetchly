@@ -14,6 +14,7 @@ export function createClient(options: ClientOptions = {}): ApiClient {
                 baseUrl: options.baseUrl,
                 clientHeaders: options.headers,
                 timeout: options.timeout,
+                retry: options.retry,
                 method,
                 path,
                 ...requestOptions

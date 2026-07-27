@@ -261,7 +261,7 @@ npm run build
 ## Roadmap
 
 - [x] Request and response interceptors.
-- [ ] Retry support for temporary server errors
+- [x] Retry support for temporary server errors
 - [ ] JWT token refresh
 - [ ] FormData upload support
 - [ ] File download helpers
