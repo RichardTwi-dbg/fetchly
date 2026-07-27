@@ -262,7 +262,7 @@ npm run build
 
 - [x] Request and response interceptors.
 - [x] Retry support for temporary server errors
-- [ ] JWT token refresh
+- [x] JWT token refresh
 - [ ] FormData upload support
 - [ ] File download helpers
 - [ ] Middleware API
